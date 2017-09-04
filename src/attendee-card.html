@@ -1,0 +1,148 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+
+<!-- Import comment external dependencies -->
+<link rel="import" href="./imports/import-horizon.html">
+
+<dom-module id="attendee-card">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+      }
+
+      .flex {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-around;
+      }
+
+      img {
+        width: 200px;
+        min-width: 200px;
+        height: 200px;
+      }
+
+      @media(max-width: 799px)  {
+        :host .flex {
+          flex-direction: column;
+          align-items: center;
+        }
+        
+        :host .info {
+          padding-left: 0;
+          padding-top: 16px;
+        }
+
+        :host img {
+          width: 80px;
+          min-width: 80px;
+          height: 80px;
+        }
+      }
+
+      .info {
+        width: 100%;
+        padding-left: 16px;
+      }
+
+      .host h2 {
+        margin: 0;
+        margin-top: 8px;
+      }
+
+      .host .info {
+        padding-left: 0;
+      }
+
+      .host fieldset {
+        border-radius: 8px;
+      }
+
+      input {
+        border: none;
+        border-bottom: solid 1px;
+        transition: 1s  all;
+      }
+
+      input:focus {
+        border-bottom: solid 2px var(--app-primary-color);
+      }
+    </style>
+    <template is="dom-if" if={{attendee.pass}}>
+      <div class="card">
+        <div class="flex">
+          <img src$="[[attendee.pass]]">
+          <div class="info">
+            <div><b>Name : </b>{{attendee.name}}</div>
+            <div><b>Lastname : </b>{{attendee.lastname}}</div>
+            <div><b>Church : </b>{{attendee.church}}</div>
+            <div><b>Meal : </b>{{attendee.meal}}</div>
+            <div><b>Type : </b>{{attendee.type}}</div>
+            <div class="host">
+              <template is="dom-if" if={{attendee.host}}>
+                <fieldset>
+                  <legend>Invited by :</legend>
+                  <div class="info">
+                    <div><b>Name : </b>{{host.name}}</div>
+                    <div><b>Lastname : </b>{{host.lastname}}</div>
+                    <div><b>Church : </b>{{host.church}}</div>
+                    <div><b>Meal : </b>{{host.meal}}</div>
+                    <div><b>Type : </b>{{host.type}}</div>
+                  </div>
+                </fieldset>
+              </template>
+            </div>
+            <div class="gest">
+              <template is="dom-repeat" items={{attendee.guests}} 
+                as=item index-as=index>
+                <div><span>Guest [[index]] : </span><input type="text" readonly="true" value$="[[item]]" onclick="this.focus();this.select()"></div>
+              </template>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </template>
+  </template>
+
+  <script>
+    class AttendeeCard extends Polymer.Element {
+      static get is() { return 'attendee-card'; }
+      static get properties() {
+        return {
+          attendee: {
+            type: Object,
+            value: () => {
+                return {};
+            }
+          }
+        };
+      }
+      static get observers() {
+        return [
+          '_attendeeChanged(attendee.id)',
+        ];
+      }
+      constructor() {
+        super();
+        // Be sur to initialize connection before properties start to change
+        this.hz = new Horizon({
+          host: "localhost:8181",
+          authType: 'unauthenticated'
+        });
+        this.hz.connect();
+        this.attendeeCollection = this.hz('attendee');
+      }
+      _attendeeChanged(attendeeId) {
+        if (this.attendee && this.attendee.host) {
+          this.attendeeCollection.find(this.attendee.host).fetch().subscribe((data) => {
+            this.set('host', data);
+          });
+        }
+      }
+    }
+
+    window.customElements.define(AttendeeCard.is, AttendeeCard);
+  </script>
+</dom-module>

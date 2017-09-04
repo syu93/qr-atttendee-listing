@@ -1,0 +1,320 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+
+<!-- Import custom elements -->
+<link rel="import" href="attendee-card.html">
+
+<!-- Imports other dependencies -->
+<link rel="import" href="./imports/import-instascan.html">
+
+<dom-module id="qr-scan">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        height: 100%;
+        padding: 10px;
+      }
+
+      video {
+        display: block;
+        width: 100%;
+        height: 50vh;
+        background: #cccccc;
+      }
+
+      .manage-camera paper-toggle-button, paper-icon-button {
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      [icon="check-circle"] {
+        color: var(--app-success-color);
+      }
+
+      [icon="cancel"] {
+        color: var(--app-error-color);
+      }
+
+      .btn {
+        color: #ffffff;
+        background: var(--app-primary-color);
+      }
+
+      .close {
+        text-transform: none;
+        color: #eeff41;
+      }
+
+      paper-fab {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        background: var(--app-primary-color);
+      }
+
+    </style>
+    <div class="card">
+        <div class="manage-camera">
+            <span>Enable camara : </span><paper-toggle-button checked="{{cameraEnabled}}"></paper-toggle-button>
+            <paper-icon-button icon="image:camera-front" raised on-tap="_switchCameraFront"></paper-icon-button>
+            <paper-icon-button icon="image:camera-rear" raised on-tap="_switchCameraBack"></paper-icon-button>
+
+            <iron-icon icon$="[[scanStatus]]"></iron-icon>
+        </div>
+        <video id="preview"></video>
+        <!-- <paper-button raised on-tap="__scan">Test</paper-button> -->
+        <template is="dom-if" if={{cameraEnabled}}>
+          <paper-fab raised icon="image:camera-alt" on-tap="_scan"></paper-fab>
+        </template>
+    </div>
+
+    <paper-toast id="toast" text$="[[toast.message]]" duration="4000">
+      <template is="dom-if" if={{toast.success}}>
+        <paper-button class="btn" raised on-tap="_openModal">Open</paper-button>
+      </template>
+      <template is="dom-if" if={{!toast.success}}>
+        <paper-button class="close" on-tap="_close">Close</paper-button>
+      </template>
+    </paper-toast>
+  </template>
+
+  <script>
+    class QrScann extends Polymer.Element {
+      static get is() { return 'qr-scan'; }
+      static get properties() {
+        return {
+          cameraEnabled: {
+            type: Boolean,
+            value: false,
+            observer: '_cameraEnabledChanged'
+          },
+          scanner: {
+            type: Object
+          },
+          cameras: {
+            type: Object
+          },
+          attendee: {
+            type: Object
+          },
+          toast: {
+            type: Object,
+            value: () => {
+              return {
+                success: false,
+                message: ""
+              }
+            }
+          }
+        };
+      }
+      constructor() {
+        super();
+        // Be sur to initialize connection before properties start to change
+        this.hz = new Horizon({
+          host: "localhost:8181",
+          authType: 'unauthenticated'
+        });
+        this.hz.connect();
+        this.attendeeCollection = this.hz('attendee');
+      }
+      ready() {
+        super.ready();
+        this.set('scanner', new Instascan.Scanner({
+            video: this.$.preview,
+            continuous: false,
+            mirror: false,
+        }));
+        this.scanner.addListener('scan', (content) => {
+            console.log(content);
+        });
+
+        Instascan.Camera.getCameras().then((cameras) => {
+            if (cameras.length > 0) {
+              this.set('cameras', cameras);
+            } else {
+                console.error('No cameras found.');
+            }
+        }).catch((e) => {
+            console.error(e);
+        });
+      }
+
+      _close() {
+        this.$.toast.toggle();
+      }
+
+      _openModal() {
+        // this.$.dialog.open();
+        this.fire('open-dialog', {attendee: this.attendee});
+      }
+
+      _switchCameraFront() {
+        if (this.cameraEnabled && this.cameras[0]) { this.scanner.start(this.cameras[0]) }
+      }
+
+      _switchCameraBack() {
+        if (this.cameraEnabled && this.cameras[1]) { this.scanner.start(this.cameras[1]) }
+      }
+
+      _cameraEnabledChanged(cameraEnabled) {
+        if (cameraEnabled && this.scanner) {
+          this.cameras[1] ? this.scanner.start(this.cameras[1]) : this.scanner.start(this.cameras[0]);
+        } else if(this.scanner) {
+          this.scanner.stop();
+        }
+      }
+
+      _scan() {
+        if (this.cameraEnabled) {
+          this.$.toast.close();
+          let result = this.scanner.scan();
+          if (result) {
+            this.set('scanStatus', 'check-circle');
+            let splittedUrl = result.content.split('/');
+            let ln = splittedUrl.length;
+            let attendeeId = splittedUrl[ln-1];
+            this.attendeeCollection.find(attendeeId).watch().subscribe((attendee) => {
+              this.set('attendee', attendee);
+            });
+            // Set checkin status
+            this.attendeeCollection.update({
+              id: attendeeId,
+              checkin: true
+            });
+
+            this.set('toast.success', true);
+            this.set('toast.message', "Attendee checked in !");
+          } else {
+            this.set('toast.success', false);
+            this.set('toast.message', "Unable to read this code !");
+            this.set('scanStatus', 'cancel');
+          }
+          this.$.toast.open();
+        } else {
+          console.log("Enable camera first!");
+        }
+      }
+
+      __scan() {
+        this.$.toast.close();
+        let result = {content: `${window.location.host}/attendee/0bc782fc-08a7-4da7-81f7-58a3bbd46189`};
+        if (result) {
+          this.set('scanStatus', 'check-circle');
+          let splittedUrl = result.content.split('/');
+          let ln = splittedUrl.length;
+          let attendeeId = splittedUrl[ln-1];
+          this.attendeeCollection.find(attendeeId).watch().subscribe((attendee) => {
+            this.set('attendee', attendee);
+          });
+          // Set checkin status
+          this.attendeeCollection.update({
+            id: attendeeId,
+            checkin: true
+          });
+
+          this.set('toast.success', true);
+          this.set('toast.message', "Attendee checked in !");
+        } else {
+          this.set('toast.success', false);
+          this.set('toast.message', "Unable to read this code !");
+          this.set('scanStatus', 'cancel');
+        }
+        this.$.toast.open();
+      }
+
+      /**
+       * Dispatches a custom event with an optional detail value.
+       *
+       * @param {string} type Name of event type.
+       * @param {*=} detail Detail value containing event-specific
+       *   payload.
+       * @param {{ bubbles: (boolean|undefined), cancelable: (boolean|undefined), composed: (boolean|undefined) }=}
+       *  options Object specifying options.  These may include:
+       *  `bubbles` (boolean, defaults to `true`),
+       *  `cancelable` (boolean, defaults to false), and
+       *  `node` on which to fire the event (HTMLElement, defaults to `this`).
+       * @return {Event} The new event that was fired.
+       */
+      fire(type, detail, options) {
+        options = options || {};
+        detail = (detail === null || detail === undefined) ? {} : detail;
+        let event = new Event(type, {
+          bubbles: options.bubbles === undefined ? true : options.bubbles,
+          cancelable: Boolean(options.cancelable),
+          composed: options.composed === undefined ? true: options.composed
+        });
+        event.detail = detail;
+        let node = options.node || this;
+        node.dispatchEvent(event)
+        return event;
+      }
+
+      /**
+       * [ajax description]
+       * @param  {[type]} url
+       * @param  {[type]} type
+       * @param  {[type]} data
+       * @param  {[type]} callback
+       * @param  {[type]} failure
+       * @param  {[type]} headers
+       * @return {[type]}
+       */
+        ajax(param) {
+          var url = typeof param.url !== 'undefined' ? param.url : "/";
+          var type = typeof param.type !== 'undefined' ? param.type : "GET";
+          var data = typeof param.data !== 'undefined' ? param.data : {};
+          var headers = typeof param.headers !== 'undefined' ? param.headers : [{ 'header': 'X-Requested-With', 'value': 'XMLHttpRequest' }];
+          var user = typeof param.user !== 'undefined' ? param.user : null;
+          var password = typeof param.password !== 'undefined' ? param.password : null;
+          var async = typeof param.async != 'undefined' ? param.async : true;
+
+          // Promise fallback
+          var callback = typeof param.callback !== 'undefined' ? param.callback : function () { };
+          var failure = typeof param.failure !== 'undefined' ? param.failure : function () { };
+
+          if ('Promise' in window) {
+            var promise = new Promise(function (resolve, reject) {
+                  // Init the XHR request object
+                  var request = new XMLHttpRequest();
+                  request.open(type, url, async, user, password);
+
+                  // Set custom headers
+                  for (var i = 0; i < headers.length; i++) {
+                    request.setRequestHeader(headers[i].header, headers[i].value);
+                  }
+
+                  request.onload = function () {
+                    if (request.status >= 200 && request.status < 400) {
+                  // Success!
+                  resolve(request);
+                } else {
+                  // Error!
+                  console.error("Error:", request.status);
+                  reject(request);
+                }
+              };
+
+              request.onerror = function () {
+                reject(this.statusText);
+              };
+
+              request.send(data);
+            });
+            return promise;
+          } else { console.warn("Promise are not supported on this browser!"); }
+        }
+    }
+
+    window.customElements.define(QrScann.is, QrScann);
+  </script>
+</dom-module>

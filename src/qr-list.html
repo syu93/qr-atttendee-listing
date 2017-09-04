@@ -1,0 +1,317 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid-sorter.html">
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid-filter.html">
+<link rel="import" href="../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="shared-styles.html">
+
+<link rel="import" href="attendee-card.html">
+<dom-module id="qr-list">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        height: 100%;
+        padding: 10px;
+      }
+
+      vaadin-grid {
+        height: auto;
+      }
+
+      div.badge {
+        font-size: 12px;
+        background: #ff9a33;
+        color: #ffffff;
+        border-radius: 3px;
+        padding: 3px;
+        text-align: center;
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+
+      div.badge[checked] {
+        background: var(--app-primary-color);
+      }
+
+      iron-icon[icon="error"] {
+        color: var(--app-error-color);
+      }
+
+      iron-icon[icon="error-outline"] {
+        color: #c5c3c3;
+      }
+
+      paper-button.report {
+        background: var(--app-error-color);
+        color: #ffffff;
+      }
+
+      .details {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        align-items: stretch;
+      }
+
+      .details attendee-card {
+        flex: 1 1 auto;
+      }
+
+      div.more {
+        margin: 24px;
+        width: 30%;
+        height: 100%;
+      }
+      
+      div.more paper-button {
+        color: #ffffff;
+      }
+
+      div.more paper-button.success {
+        background: var(--app-primary-color);
+      }
+
+      div.more paper-button.warn {
+        background:  #ff9a33;
+      }
+
+      div.more paper-button.error {
+        background:  var(--app-error-color);
+      }
+
+      div.more .row {
+        padding: 10px 0;
+      }
+      .meal {
+        padding: 0.7em 0.57em;
+      }
+
+      .meal paper-toggle-button {
+        display: inline-block;
+        vertical-align: top;
+      }
+
+      .danger {
+        background: var(--app-error-color);
+        color: #ffffff;
+        text-transform: uppercase;
+        font-weight: bold;
+        padding: 5px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+      }
+    </style>
+    <div class="card">
+        <h2>Attendee listing</h2>
+        <div>
+          <label id="type">Attendee type : </label>
+          <paper-radio-group aria-labelledby="type" selected="{{type}}" fallback-selection="attendee">
+            <paper-radio-button name="attendee">Attendee</paper-radio-button>
+            <paper-radio-button name="staff">Staff</paper-radio-button>
+            <paper-radio-button name="guest">Gest</paper-radio-button>
+            <paper-radio-button name="spontaneous">Spontaneous</paper-radio-button>
+            <paper-radio-button name="invited">Invited only</paper-radio-button>
+          </paper-radio-group>
+        </div>
+        <vaadin-grid items="[[attendeeList]]">
+
+          <!-- Row detail template -->
+          <template class="row-details">
+            <div class="details">
+              <attendee-card attendee="[[item]]"></attendee-card>
+              <div class="more">
+                <div class="row">
+                  <paper-button class="success" raised id="[[item.id]]" on-tap="_check">Check in</paper-button>
+                  <paper-button class="error" raised id="[[item.id]]" on-tap="_uncheck">Un check</paper-button></div>
+                <div class="row"><paper-button class="warn" raised id="[[item.id]]" on-tap="_unreport">Un-report</paper-button></div>
+                <div class="row">
+                  <div class="meal">
+                    <span>Meal : </span><paper-toggle-button id="[[item.id]]" checked="[[item.meal]]" on-checked-changed="_updateMeal"></paper-toggle-button>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="danger">Danger zone!</div>
+                </div>
+                <div class="row"><paper-button class="error" raised id="[[item.id]]" on-tap="_deleteAttendee"><iron-icon icon="delete"></iron-icon>Delete</paper-button></div>
+              </div>
+            </div>
+          </template>
+
+          <vaadin-grid-column width="50px" flex-grow="0">
+            <template class="header">#</template>
+            <template>[[index]]</template>
+          </vaadin-grid-column>
+
+          <vaadin-grid-column>
+            <template class="header">
+              <vaadin-grid-filter aria-label="First Name" path="name" value="[[_filterFirstName]]">
+                <paper-input slot="filter" label="First Name" value="{{_filterFirstName::input}}" focus-target></paper-input>
+              </vaadin-grid-filter>
+              <vaadin-grid-sorter path="name">First Name</vaadin-grid-sorter>
+            </template>
+            <template>[[item.name]]</template>
+          </vaadin-grid-column>
+
+          <vaadin-grid-column>
+            <template class="header">
+              <vaadin-grid-filter aria-label="Last Name" path="lastname" value="[[_filterLastName]]">
+                <paper-input slot="filter" label="First Name" value="{{_filterLastName::input}}" focus-target></paper-input>
+              </vaadin-grid-filter>
+              <vaadin-grid-sorter path="lastname">Last Name</vaadin-grid-sorter></template>
+            <template>[[item.lastname]]</template>
+          </vaadin-grid-column>
+
+          <vaadin-grid-column>
+            <template class="header">
+              <vaadin-grid-filter aria-label="Church" path="church" value="[[_filterChurch]]">
+                <paper-input slot="filter" label="Church" value="{{_filterChurch::input}}" focus-target></paper-input>
+              </vaadin-grid-filter>
+              <vaadin-grid-sorter path="church">Church</vaadin-grid-sorter></template>
+            <template>[[item.church]]</template>
+          </vaadin-grid-column>
+
+          <vaadin-grid-column>
+            <template class="header">
+              <vaadin-grid-sorter path="meal">Meal</vaadin-grid-sorter></template>
+            <template>[[item.meal]]</template>
+          </vaadin-grid-column>
+
+          <vaadin-grid-column>
+            <template class="header">Invite type</template>
+            <template>[[item.type]]</template>
+          </vaadin-grid-column>
+
+          <vaadin-grid-column>
+            <template class="header">Checked</template>
+            <template>
+              <div class="badge" checked$=[[item.checkin]]>[[_displayCheckedState(item.checkin)]]</div>
+            </template>
+          </vaadin-grid-column>
+
+          <vaadin-grid-column>
+            <template class="header">Status</template>
+            <template>
+              <iron-icon class="status" icon$="[[_displayStatusState(item.reported)]]"></iron-icon>
+            </template>
+          </vaadin-grid-column>
+
+          <vaadin-grid-column>
+            <template class="header">Report</template>
+            <template>
+              <paper-button class="report" raised id="[[item.id]]" on-tap="_report">Report</paper-button>
+            </template>
+          </vaadin-grid-column>
+
+
+          <vaadin-grid-column>
+            <template class="header"></template>
+            <template>
+              <paper-checkbox aria-label$="Show Details for [[item.name]]" checked="{{expanded}}">Show Details</paper-checkbox>
+            </template>
+          </vaadin-grid-column>
+
+        </vaadin-grid>
+    </div>
+  </template>
+
+  <script>
+    class QrList extends Polymer.Element {
+      static get is() { return 'qr-list'; }
+      static get properties() {
+        return {
+          type: {
+            type: String,
+            value: "attendee",
+            observer: '_typeChanged'
+          },
+          attendeeList: {
+            type: Array,
+            value: _ => {return []}
+          }
+        };
+      }
+      constructor() {
+        super();
+        // Be sur to initialize connection before properties start to change
+        this.hz = new Horizon({
+          host: "localhost:8181",
+          authType: 'unauthenticated'
+        });
+        this.hz.connect();
+        this.attendeeCollection = this.hz('attendee');
+      }
+      ready() {
+        super.ready();
+        this.attendeeCollection.findAll({type: this.type, active: true}).watch().subscribe((data) => {
+          this.set('attendeeList', data);
+        });
+      }
+      _deleteAttendee(e) {
+        if (e.target && e.target.id) {
+          this.attendeeCollection.update({
+            id: e.target.id,
+            active: false
+          });
+        }
+      }
+      _updateMeal(e) {
+        if (e.target && e.target.id) {
+          this.attendeeCollection.update({
+            id: e.target.id,
+            meal: e.target.checked
+          });
+        }
+      }
+      _report(e) {
+        if (e.target && e.target.id) {
+          this.attendeeCollection.update({
+            id: e.target.id,
+            reported: true
+          });
+        }
+      }
+      _unreport(e) {
+        if (e.target && e.target.id) {
+          this.attendeeCollection.update({
+            id: e.target.id,
+            reported: false
+          });
+        }
+      }
+      _check(e) {
+        if (e.target && e.target.id) {
+          this.attendeeCollection.update({
+            id: e.target.id,
+            checkin: true
+          });
+        }
+      }
+      _uncheck(e) {
+        if (e.target && e.target.id) {
+          this.attendeeCollection.update({
+            id: e.target.id,
+            checkin: false
+          });
+        }
+      }
+      _displayStatusState(reported) {
+        return reported ? "error" : "error-outline";
+      }
+      _displayCheckedState(checked) {
+        return checked ? "Checked in" : "Not checked";
+      }
+      _typeChanged() {
+        this.attendeeCollection.findAll({type: this.type, active: true}).watch().subscribe((data) => {
+          this.set('attendeeList', data);
+        });
+      }
+    }
+
+    window.customElements.define(QrList.is, QrList);
+  </script>
+</dom-module>

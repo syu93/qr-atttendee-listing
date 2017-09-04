@@ -1,0 +1,73 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+
+<link rel="import" href="attendee-card.html">
+
+<!-- Import other dependecies -->
+<script src="./imports/qrious/dist/qrious.min.js"></script>
+
+<dom-module id="qr-attendee">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        height: 100%;
+        padding: 10px;
+      }
+    </style>
+    <app-route
+        route="{{route}}"
+        pattern="/attendee/:attendee"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
+    <canvas id="qr" hidden></canvas>
+    <attendee-card attendee="[[attendee]]"></attendee-card>
+  </template>
+
+  <script>
+    class QrAttendee extends Polymer.Element {
+      static get is() { return 'qr-attendee'; }
+      static get properties() {
+        return {
+          routeData: Object,
+          rootPath: String,
+          attendee: Object
+        };
+      }
+      static get observers() {
+        return [
+          '_routePageChanged(routeData.attendee)',
+        ];
+      }
+      constructor() {
+        super();
+        // Be sur to initialize connection before properties start to change
+        this.hz = new Horizon({
+          host: "localhost:8181",
+          authType: 'unauthenticated'
+        });
+        this.hz.connect();
+        this.attendeeCollection = this.hz('attendee');
+      }
+
+      ready() {
+        super.ready();
+        this.set('qrCode', new QRious({
+          element: this.$.qr,
+          size: 200
+        }));
+      }
+
+      _routePageChanged(attendeeId) {
+        this.attendeeCollection.find(attendeeId).fetch().subscribe((attendee) => {
+          this.set('attendee', attendee);
+          this.qrCode.value = `${window.location.host}attendee/${attendee.id}`;
+          this.set('attendee.image', this.$.qr.toDataURL());
+        });
+      }
+    }
+
+    window.customElements.define(QrAttendee.is, QrAttendee);
+  </script>
+</dom-module>

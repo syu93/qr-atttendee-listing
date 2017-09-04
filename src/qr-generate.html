@@ -1,0 +1,187 @@
+<!-- Sources -->
+<!-- https://davidshimjs.github.io/qrcodejs/ -->
+<!-- https://github.com/LazarSoft/jsqrcode -->
+<!-- https://github.com/schmich/instascan -->
+
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-radio-group/paper-radio-group.html">
+
+<!-- Import custom elements -->
+<link rel="import" href="attendee-card.html">
+
+<!-- Import other dependecies -->
+<link rel="import" href="./imports/import-qrious.html">
+
+<dom-module id="qr-generate">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+
+      .meal {
+        margin-top: 16px;
+      }
+
+      .meal paper-toggle-button {
+        display: inline-block;
+        vertical-align: top;
+      }
+
+      paper-button {
+        background: var(--app-primary-color);
+        color: #ffffff;
+      }
+    </style>
+
+    <attendee-card attendee="[[attendeeObject]]"></attendee-card>
+
+    <div class="card">
+      <h1>Register a new attendee</h1>
+      <div>
+        <canvas id="qr" hidden></canvas>
+        <label id="type">Attendee type : </label>
+        <paper-radio-group aria-labelledby="type" selected="{{attendee.type}}" fallback-selection="attendee">
+          <paper-radio-button name="attendee">Attendee</paper-radio-button>
+          <paper-radio-button name="staff">Staff</paper-radio-button>
+          <paper-radio-button name="guest">Gest</paper-radio-button>
+          <paper-radio-button name="spontaneous">Spontaneous</paper-radio-button>
+        </paper-radio-group>
+        <paper-input label="Enter name" value="{{attendee.name}}"></paper-input>
+        <paper-input label="Enter lastname" value="{{attendee.lastname}}"></paper-input>
+        <paper-input label="Enter church name" value="{{attendee.church}}"></paper-input>
+        <div class="meal">
+          <span>Meal : </span><paper-toggle-button checked="{{attendee.meal}}"></paper-toggle-button>
+        </div>
+        <div style="text-align: right;">
+          <paper-button raised on-tap="_generateCode">Create</paper-button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    class QrGenerate extends Polymer.Element {
+      static get is() { return 'qr-generate'; }
+      static get properties() {
+        return {
+          attendee: {
+            type: Object,
+            value: () => {
+              return {};
+            }
+          },
+          attendeeObject: {
+            type: Object,
+            value: () => {
+              return {};
+            }
+          },
+
+          attendeeGuestType: {
+            type: Object,
+            value: () => {
+              return {attendee: "2", staff: "10", guest: "10"};
+            }
+          },
+
+          qrCode: {
+            type: Object
+          },
+
+          hideCode: {
+            type: Boolean,
+            value: true
+          },
+
+          hz: {
+            type: Object
+          }
+        };
+      }
+      ready() {
+        super.ready();
+        this.set('qrCode', new QRious({
+          element: this.$.qr,
+          size: 200
+        }));
+        this.hz = new Horizon({
+          host: "localhost:8181",
+          authType: 'unauthenticated'
+        });
+        this.hz.connect();
+        this.attendeeCollection = this.hz('attendee');
+      }
+
+      _generateCode() {
+        if ((this.attendee.name && this.attendee.lastname && this.attendee.church && this.attendee.type) || this.attendee.type == "spontaneous") {
+          this.attendeeCollection.store({
+            name: this.attendee.name,
+            lastname: this.attendee.lastname,
+            church: this.attendee.church,
+            meal: this.attendee.meal || false,
+            type: this.attendee.type,
+            checkin: false,
+            reported: false,
+            active: true
+          }).subscribe((data) => {
+              this.qrCode.value = `${window.location.host}attendee/${data.id}`;
+              let pass = this.$.qr.toDataURL();
+              this.set('attendeeObject', this.attendee);
+              this.set('attendeeObject.pass', pass);
+              this.set('attendeeObject.guests', []);
+
+              // Store the data imdate
+              this.attendeeCollection.update({
+                id: data.id,
+                pass: pass
+              });
+
+              // Add sub attendee
+              let count = this.attendeeGuestType[this.attendee.type];
+              for (var i = 0; i < count; i++) {
+                let canvas = document.createElement('canvas');
+                canvas.id = `${data.id}_${i}`;
+
+                let _qr = new QRious({
+                  element: canvas,
+                  size: 200
+                });
+                this.attendeeCollection.store({
+                  name: "",
+                  lastname: "",
+                  church: "",
+                  meal: true,
+                  type: "invited",
+                  host: data.id,
+                  checkin: false,
+                  reported: false,
+                  active: true
+                }).subscribe((guest) =>  {
+                  _qr.value = `${window.location.host}attendee/${guest.id}`;
+                  this.attendeeCollection.update({
+                    id: guest.id,
+                    pass: canvas.toDataURL()
+                  });
+                  this.push('attendeeObject.guests', guest.id);
+                });
+              }
+
+              this.set('attendee', {});
+
+              this.hideCode = false;
+          });
+        } else {
+          console.error("Missing information !");
+          this.hideCode = true;
+        }
+      }
+    }
+
+    window.customElements.define(QrGenerate.is, QrGenerate);
+  </script>
+</dom-module>
