@@ -15,7 +15,7 @@
     <style include="shared-styles">
       :host {
         display: block;
-        height: 100%;
+        height: 90vh;
         padding: 10px;
       }
 
@@ -70,6 +70,11 @@
       
       div.more paper-button {
         color: #ffffff;
+        width: 110px;
+      }
+
+      div.more a {
+        text-decoration: none;
       }
 
       div.more paper-button.success {
@@ -135,9 +140,11 @@
                   </div>
                 </div>
                 <div class="row">
-                  <div class="danger">Danger zone!</div>
+                  <div class="danger">Admin zone!</div>
                 </div>
-                <div class="row"><paper-button class="error" raised id="[[item.id]]" on-tap="_deleteAttendee"><iron-icon icon="delete"></iron-icon>Delete</paper-button></div>
+                <div class="row">
+                  <a href="/attendee/[[item.id]]/edit"><paper-button class="success" raised><iron-icon icon="create"></iron-icon>Edit</paper-button></a>
+                  <paper-button class="error" raised id="[[item.id]]" on-tap="_deleteAttendee"><iron-icon icon="delete"></iron-icon>Delete</paper-button></div>
               </div>
             </div>
           </template>
@@ -187,7 +194,7 @@
           </vaadin-grid-column>
 
           <vaadin-grid-column>
-            <template class="header">Checked</template>
+            <template class="header"><vaadin-grid-sorter path="checkin">Checked</vaadin-grid-sorter></template>
             <template>
               <div class="badge" checked$=[[item.checkin]]>[[_displayCheckedState(item.checkin)]]</div>
             </template>

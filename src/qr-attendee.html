@@ -1,28 +1,34 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="shared-styles.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
+<link rel="import" href="shared-styles.html">
 <link rel="import" href="attendee-card.html">
+<link rel="import" href="attendee-form.html">
 
 <!-- Import other dependecies -->
-<script src="./imports/qrious/dist/qrious.min.js"></script>
 
 <dom-module id="qr-attendee">
   <template>
     <style include="shared-styles">
       :host {
         display: block;
-        height: 100%;
+        height: 90vh;
         padding: 10px;
       }
     </style>
     <app-route
         route="{{route}}"
-        pattern="/attendee/:attendee"
+        pattern="/attendee/:attendee/:edit"
         data="{{routeData}}"
         tail="{{subroute}}"></app-route>
-    <canvas id="qr" hidden></canvas>
-    <attendee-card attendee="[[attendee]]"></attendee-card>
+    <iron-pages selected="[[editMode]]" attr-for-selected="name">
+      <attendee-card name="read" attendee="[[attendee]]"></attendee-card>
+      <attendee-form name="edit" title="Edit an attendee" attendee="{{attendee}}" on-validate-form="_editAttendee"></attendee-form>
+    </iron-pages>
+    <paper-toast id="toast" duration="5000"><span class="toast-message">Update successful !</span><iron-icon icon="check-circle"></iron-icon></paper-toast>
   </template>
 
   <script>
@@ -30,6 +36,7 @@
       static get is() { return 'qr-attendee'; }
       static get properties() {
         return {
+          attendee: Object,
           routeData: Object,
           rootPath: String,
           attendee: Object
@@ -38,6 +45,7 @@
       static get observers() {
         return [
           '_routePageChanged(routeData.attendee)',
+          '_routeEditChanged(routeData.edit)',
         ];
       }
       constructor() {
@@ -53,17 +61,29 @@
 
       ready() {
         super.ready();
-        this.set('qrCode', new QRious({
-          element: this.$.qr,
-          size: 200
-        }));
+        this.$.toast.fitInto = this;
+      }
+
+      _editAttendee() {
+        this.attendeeCollection.update({
+          id: this.attendee.id,
+          name: this.attendee.name,
+          lastname: this.attendee.lastname,
+          church: this.attendee.church,
+          meal: this.attendee.meal,
+          type: this.attendee.type,
+        }).subscribe((data) => {
+          this.$.toast.open();
+        });
+      }
+
+      _routeEditChanged(edit) {
+        this.editMode = edit || "read";
       }
 
       _routePageChanged(attendeeId) {
         this.attendeeCollection.find(attendeeId).fetch().subscribe((attendee) => {
           this.set('attendee', attendee);
-          this.qrCode.value = `${window.location.host}attendee/${attendee.id}`;
-          this.set('attendee.image', this.$.qr.toDataURL());
         });
       }
     }
