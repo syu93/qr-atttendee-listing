@@ -24,9 +24,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
-<link rel="lazy-import" href="qr-generate.html">
+<link rel="lazy-import" href="qr-list.html">
 <link rel="lazy-import" href="qr-scan.html">
+<link rel="lazy-import" href="qr-generate.html">
 <link rel="lazy-import" href="qr-attendee.html">
 <link rel="lazy-import" href="my-view404.html">
 
@@ -45,6 +47,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         --primary-color: #4285f4;
 
         display: block;
+      }
+
+      :host(:not([page="list"])) [drawer-toggle] {
+        display: none;
+      }
+
+      :host(:not([page="list"])) .arrow-back {
+        display: block;
+      }
+
+      .arrow-back {
+        display: none;
+        text-decoration: none;
+        color: inherit;
       }
 
       app-drawer-layout:not([narrow]) [drawer-toggle] {
@@ -94,9 +110,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <app-drawer id="drawer" slot="drawer" swipe-open="[[narrow]]">
         <app-toolbar>Menu</app-toolbar>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="generate" href="[[rootPath]]generate">Generate</a>
-          <a name="scan" href="[[rootPath]]scan">Scan</a>
           <a name="list" href="[[rootPath]]list">List</a>
+          <a name="scan" href="[[rootPath]]scan">Scan</a>
+          <a name="generate" href="[[rootPath]]generate">Generate</a>
         </iron-selector>
       </app-drawer>
 
@@ -105,6 +121,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <app-header slot="header" condenses reveals effects="waterfall">
           <app-toolbar>
+            <a href="/" class="arrow-back"><paper-icon-button icon="arrow-back"></paper-icon-button></a>
             <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
             <div main-title>Attendee list management</div>
           </app-toolbar>
@@ -153,7 +170,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _routePageChanged(page) {
         // If no page was found in the route data, page will be an empty string.
         // Deault to 'view1' in that case.
-        this.page = page || 'generate';
+        this.page = page || 'list';
 
         // Close a non-persistent drawer when the page & route are changed.
         if (!this.$.drawer.persistent) {
