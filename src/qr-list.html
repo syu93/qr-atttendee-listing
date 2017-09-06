@@ -110,9 +110,22 @@
         border-radius: 3px;
         font-size: 12px;
       }
+
+      .header {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+      }
+
+      .attendee-count {
+        color: var(--app-primary-color);
+      }
     </style>
     <div class="card">
-        <h2>Attendee listing</h2>
+        <div class="header">
+          <h2>Attendee listing</h2>
+          <h3>Attendee checked in : [[attendeeCheckedCount]]/<span class="attendee-count">[[attendeeCount]]</span></h3>
+        </div>
         <div>
           <label id="type">Attendee type : </label>
           <paper-radio-group aria-labelledby="type" selected="{{type}}" fallback-selection="attendee">
@@ -256,6 +269,12 @@
         super.ready();
         this.attendeeCollection.findAll({type: this.type, active: true}).watch().subscribe((data) => {
           this.set('attendeeList', data);
+        });
+        this.attendeeCollection.findAll({active: true, checkin: true}).watch().subscribe((data) => {
+          this.set('attendeeCheckedCount', data.length);
+        });
+        this.attendeeCollection.findAll({active: true}).watch().subscribe((data) => {
+          this.set('attendeeCount', data.length);
         });
       }
       _deleteAttendee(e) {
