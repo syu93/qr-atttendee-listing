@@ -139,6 +139,8 @@
         }).catch((e) => {
             console.error(e);
         });
+
+        this.$.toast.fitInto = this;
       }
 
       _close() {
@@ -146,7 +148,6 @@
       }
 
       _openModal() {
-        // this.$.dialog.open();
         this.fire('open-dialog', {attendee: this.attendee});
       }
 

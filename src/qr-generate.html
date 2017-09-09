@@ -22,7 +22,7 @@
       :host {
         display: block;
         padding: 10px;
-        height: 90vh;
+        height: 80vh;
       }
 
       .meal {
@@ -42,7 +42,7 @@
 
     <attendee-card attendee="[[attendeeObject]]"></attendee-card>
     <canvas id="qr" hidden></canvas>
-    <attendee-form title="Register a new attendee" attendee="{{attendee}}" on-validate-form="_generateCode"></attendee-form>
+    <attendee-form title="Register a new attendee" attendee="{{attendee}}" type-enable on-validate-form="_generateCode"></attendee-form>
     <paper-toast id="toast" duration="5000">
       <span class="toast-message">[[toastMessage]]</span><iron-icon icon$="[[toastIcon]]"></iron-icon>
     </paper-toast>
