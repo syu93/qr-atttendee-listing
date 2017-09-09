@@ -15,12 +15,19 @@
     <style include="shared-styles">
       :host {
         display: block;
-        height: 90vh;
+        height: 80vh;
         padding: 10px;
       }
 
       vaadin-grid {
-        height: auto;
+        height: 60vh;
+        --vaadin-grid-header-cell: {
+          background: #fefefe;
+        };
+
+        --vaadin-grid-body-row-odd-cell: {
+          background-color: #f5f5f5;
+        };
       }
 
       div.badge {
