@@ -94,7 +94,7 @@
           size: 200
         }));
         this.hz = new Horizon({
-          host: "localhost:8181",
+          host: window.config.hz_host,
           authType: 'unauthenticated'
         });
         this.hz.connect();

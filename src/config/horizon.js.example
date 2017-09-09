@@ -1,0 +1,4 @@
+((window) => {
+	window.config = {};
+	window.config.hz_host = "DATABASE_HOST";
+})(window);

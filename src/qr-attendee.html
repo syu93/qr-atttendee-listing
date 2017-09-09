@@ -52,7 +52,7 @@
         super();
         // Be sur to initialize connection before properties start to change
         this.hz = new Horizon({
-          host: "localhost:8181",
+          host: window.config.hz_host,
           authType: 'unauthenticated'
         });
         this.hz.connect();
