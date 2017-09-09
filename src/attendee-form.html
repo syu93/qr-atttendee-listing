@@ -16,13 +16,15 @@
     <h1>[[title]]</h1>
     <div>
     <canvas id="qr" hidden></canvas>
-    <label id="type">Attendee type : </label>
-    <paper-radio-group aria-labelledby="type" selected="{{attendee.type}}" fallback-selection="attendee">
-      <paper-radio-button name="attendee">Attendee</paper-radio-button>
-      <paper-radio-button name="staff">Staff</paper-radio-button>
-      <paper-radio-button name="guest">Gest</paper-radio-button>
-      <paper-radio-button name="spontaneous">Spontaneous</paper-radio-button>
-    </paper-radio-group>
+    <template is="dom-if" if={{typeEnable}}>
+      <label id="type">Attendee type : </label>
+      <paper-radio-group aria-labelledby="type" selected="{{attendee.type}}" fallback-selection="attendee">
+        <paper-radio-button name="attendee">Attendee</paper-radio-button>
+        <paper-radio-button name="staff">Staff</paper-radio-button>
+        <paper-radio-button name="guest">Gest</paper-radio-button>
+        <paper-radio-button name="spontaneous">Spontaneous</paper-radio-button>
+      </paper-radio-group>
+    </template>
     <paper-input label="Enter name" value="{{attendee.name}}"></paper-input>
     <paper-input label="Enter lastname" value="{{attendee.lastname}}"></paper-input>
     <paper-input label="Enter church name" value="{{attendee.church}}"></paper-input>
@@ -49,8 +51,12 @@
           notify: true
         },
         title: {
-        type: String,
-        value: ''
+          type: String,
+          value: ''
+        },
+        typeEnable: {
+          type: Boolean,
+          value: false
         }
       };
     }
