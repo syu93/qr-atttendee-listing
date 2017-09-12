@@ -9,7 +9,7 @@
   <template>
   <style include="shared-styles">
     :host {
-    display: block;
+      display: block;
     }
   </style>
   <div class="card">
@@ -18,18 +18,21 @@
     <canvas id="qr" hidden></canvas>
     <template is="dom-if" if={{typeEnable}}>
       <label id="type">Attendee type : </label>
-      <paper-radio-group aria-labelledby="type" selected="{{attendee.type}}" fallback-selection="attendee">
-        <paper-radio-button name="attendee">Attendee</paper-radio-button>
+      <paper-radio-group aria-labelledby="type" selected="{{attendee.type}}" fallback-selection="allinclusive">
+        <paper-radio-button name="allinclusive">All inclusive<span class="price">30€</span></paper-radio-button>
+        <paper-radio-button name="guestmeal">Gest N meal<span class="price">5€</span></paper-radio-button>
+        <paper-radio-button name="kids">Kids<span class="price">Free</span></paper-radio-button>
+        <paper-radio-button name="guest">Gest<span class="price">Free</span></paper-radio-button>
         <paper-radio-button name="staff">Staff</paper-radio-button>
-        <paper-radio-button name="guest">Gest</paper-radio-button>
-        <paper-radio-button name="spontaneous">Spontaneous</paper-radio-button>
+        <!-- <paper-radio-button name="invited">Invited only</paper-radio-button> -->
       </paper-radio-group>
     </template>
     <paper-input label="Enter name" value="{{attendee.name}}"></paper-input>
     <paper-input label="Enter lastname" value="{{attendee.lastname}}"></paper-input>
     <paper-input label="Enter church name" value="{{attendee.church}}"></paper-input>
     <div class="meal">
-      <span>Meal : </span><paper-toggle-button checked="{{attendee.meal}}"></paper-toggle-button>
+      <span class="rights">Repas : </span><paper-toggle-button checked="{{attendee.meal}}"></paper-toggle-button>
+      <span class="rights">Goodies : </span><paper-toggle-button checked="{{attendee.goodies}}"></paper-toggle-button>
     </div>
     <div style="text-align: right;">
       <paper-button raised on-tap="_validate">validate</paper-button>
@@ -59,6 +62,27 @@
           value: false
         }
       };
+    }
+    static get observers() {
+      return [
+        '_attendeeTypeChanged(attendee.type)'
+      ];
+    }
+    _attendeeTypeChanged(attendeeType) {
+      let type = attendeeType || 'allinclusive';
+      if (type == "allinclusive") {
+          this.set('attendee.meal', true);
+          this.set('attendee.goodies', true);
+      } else if (type == "guestmeal") {
+          this.set('attendee.meal', true);
+          this.set('attendee.goodies', false);
+      } else if (type == "kids") {
+          this.set('attendee.meal', true);
+          this.set('attendee.goodies', false);
+      } else {
+          this.set('attendee.meal', false);
+          this.set('attendee.goodies', false);
+      }
     }
     _validate() {
       this.fire('validate-form');
