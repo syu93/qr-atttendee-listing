@@ -69,7 +69,7 @@
           attendeeGuestType: {
             type: Object,
             value: () => {
-              return {attendee: "2", staff: "10", guest: "10"};
+              return {allinclusive: "2", staff: "10"};
             }
           },
 
@@ -103,12 +103,13 @@
       }
 
       _generateCode() {
-        if ((this.attendee.name && this.attendee.lastname && this.attendee.church && this.attendee.type) || this.attendee.type == "spontaneous") {
+        if ((this.attendee.name && this.attendee.lastname && this.attendee.type) || this.attendee.type == "guest") {
           this.attendeeCollection.store({
             name: this.attendee.name,
             lastname: this.attendee.lastname,
             church: this.attendee.church,
             meal: this.attendee.meal || false,
+            goodies: this.attendee.goodies || false,
             type: this.attendee.type,
             checkin: false,
             reported: false,
@@ -140,8 +141,9 @@
                   name: "",
                   lastname: "",
                   church: "",
-                  meal: true,
-                  type: "invited",
+                  meal: false,
+                  goodies: false,
+                  type: "guest",
                   host: data.id,
                   checkin: false,
                   reported: false,
