@@ -1,6 +1,8 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="shared-styles.html">
 
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+
 <!-- Import comment external dependencies -->
 <link rel="import" href="./imports/import-horizon.html">
 
@@ -68,6 +70,10 @@
       input:focus {
         border-bottom: solid 2px var(--app-primary-color);
       }
+      paper-checkbox {
+        display: block;
+        margin-top: 8px;
+      }
     </style>
     <template is="dom-if" if={{attendee.pass}}>
       <div class="card">
@@ -77,8 +83,11 @@
             <div><b>Name : </b>{{attendee.name}}</div>
             <div><b>Lastname : </b>{{attendee.lastname}}</div>
             <div><b>Church : </b>{{attendee.church}}</div>
-            <div><b>Meal : </b>{{attendee.meal}}</div>
             <div><b>Type : </b>{{attendee.type}}</div>
+            <div class="checboxes">
+              <paper-checkbox checked="[[attendee.meal]]" disabled>Repas</paper-checkbox>
+              <paper-checkbox  checked="[[attendee.goodies]]" disabled>Goodies</paper-checkbox>
+            </div>
             <div class="host">
               <template is="dom-if" if={{attendee.host}}>
                 <fieldset>
