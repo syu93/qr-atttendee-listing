@@ -84,6 +84,10 @@
       static get is() { return 'qr-scan'; }
       static get properties() {
         return {
+          page: {
+            type: String,
+            observer: '_pageChanged'
+          },
           cameraEnabled: {
             type: Boolean,
             value: false,
@@ -141,6 +145,12 @@
         });
 
         this.$.toast.fitInto = this;
+      }
+
+      _pageChanged(e) {
+        if (this.page != 'scan') {
+          this.set('cameraEnabled', false);
+        }
       }
 
       _close() {
