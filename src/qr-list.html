@@ -10,6 +10,7 @@
 <link rel="import" href="shared-styles.html">
 
 <link rel="import" href="attendee-card.html">
+<link rel="import" href="attendee-type.html">
 <dom-module id="qr-list">
   <template>
     <style include="shared-styles">
@@ -63,7 +64,8 @@
         justify-content: space-between;
         flex-wrap: wrap;
         align-items: stretch;
-        overflow: scroll;
+        overflow-y: scroll;
+        background-color: #f5f5f5;
       }
 
       .details attendee-card {
@@ -125,6 +127,10 @@
         justify-content: space-between;
       }
 
+      .type-filter {
+        margin-bottom: 16px;
+      }
+
       .attendee-count {
         color: var(--app-primary-color);
       }
@@ -140,15 +146,9 @@
           <h2>Attendee listing</h2>
           <h3>Attendee checked in : [[attendeeCheckedCount]]/<span class="attendee-count">[[attendeeCount]]</span></h3>
         </div>
-        <div>
-          <label id="type">Attendee type : </label>
-          <paper-radio-group aria-labelledby="type" selected="{{type}}" fallback-selection="allinclusive">
-            <paper-radio-button name="allinclusive">All inclusive<span class="price">30€</span></paper-radio-button>
-            <paper-radio-button name="guestmeal">Gest N meal<span class="price">5€</span></paper-radio-button>
-            <paper-radio-button name="kids">Kids<span class="price">Free</span></paper-radio-button>
-            <paper-radio-button name="guest">Gest<span class="price">Free</span></paper-radio-button>
-            <paper-radio-button name="staff">Staff</paper-radio-button>
-          </paper-radio-group>
+        <div class="type-filter header">
+          <attendee-type type="{{type}}"></attendee-type>
+          <paper-button class="success" raised on-tap="_typeChanged">Refresh</paper-button>
         </div>
         <vaadin-grid items="[[attendeeList]]">
 
@@ -163,7 +163,8 @@
                 <div class="row"><paper-button class="warn" raised id="[[item.id]]" on-tap="_unreport">Un-report</paper-button></div>
                 <div class="row">
                   <div class="meal">
-                    <span>Meal : </span><paper-toggle-button id="[[item.id]]" checked="[[item.meal]]" on-checked-changed="_updateMeal"></paper-toggle-button>
+                    <span>Meal : </span><paper-toggle-button item="[[item]]" checked="[[item.meal]]" on-checked-changed="_updateMeal"></paper-toggle-button>
+                    <span>Goodies : </span><paper-toggle-button id="[[item.id]]" checked="[[item.goodies]]" on-checked-changed="_updateGoodies"></paper-toggle-button>
                   </div>
                 </div>
                 <div class="row">
@@ -331,11 +332,23 @@
           });
         }
       }
-      _updateMeal(e) {
+      _updateGoodies(e) {
         if (e.target && e.target.id) {
           this.attendeeCollection.update({
             id: e.target.id,
-            meal: e.target.checked
+            goodies: e.target.checked
+          });
+        }
+      }
+      _updateMeal(e) {
+        if (e.target && e.target.item && e.target.item.id) {
+          const item = e.target.item;
+          this.attendeeCollection.update({
+            id: item.id,
+            meal: e.target.checked,
+            type: (item.type == "guest" && e.target.checked) ? 'guestmeal' : "guest"
+          }).subscribe((data) => {
+            this._typeChanged();
           });
         }
       }

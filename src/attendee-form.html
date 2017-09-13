@@ -5,6 +5,8 @@
 
 <link rel="import" href="shared-styles.html">
 
+<link rel="import" href="attendee-type.html">
+
 <dom-module id="attendee-form">
   <template>
   <style include="shared-styles">
@@ -20,17 +22,7 @@
     <h1>[[title]]</h1>
     <div>
     <canvas id="qr" hidden></canvas>
-    <template is="dom-if" if={{typeEnable}}>
-      <label id="type">Attendee type : </label>
-      <paper-radio-group aria-labelledby="type" selected="{{attendee.type}}" fallback-selection="allinclusive">
-        <paper-radio-button name="allinclusive">All inclusive<span class="price">30€</span></paper-radio-button>
-        <paper-radio-button name="guestmeal">Gest N meal<span class="price">5€</span></paper-radio-button>
-        <paper-radio-button name="kids">Kids<span class="price">Free</span></paper-radio-button>
-        <paper-radio-button name="guest">Gest<span class="price">Free</span></paper-radio-button>
-        <paper-radio-button name="staff">Staff</paper-radio-button>
-        <!-- <paper-radio-button name="invited">Invited only</paper-radio-button> -->
-      </paper-radio-group>
-    </template>
+    <template is="dom-if" if={{typeEnable}}><attendee-type type="{{attendee.type}}"></attendee-type></template>
     <paper-input label="Enter name" value="{{attendee.name}}"></paper-input>
     <paper-input label="Enter lastname" value="{{attendee.lastname}}"></paper-input>
     <paper-input label="Enter church name" value="{{attendee.church}}"></paper-input>
