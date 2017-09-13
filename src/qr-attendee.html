@@ -71,7 +71,8 @@
           lastname: this.attendee.lastname,
           church: this.attendee.church,
           meal: this.attendee.meal,
-          type: this.attendee.type,
+          goodies: this.attendee.goodies,
+          type: (this.attendee.meal && this.attendee.type != "allinclisive") ? 'guestmeal' : 'guest',
         }).subscribe((data) => {
           this.$.toast.open();
         });
