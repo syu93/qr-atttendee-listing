@@ -69,7 +69,7 @@
           attendeeGuestType: {
             type: Object,
             value: () => {
-              return {allinclusive: "2", staff: "10"};
+              return {allinclusive: "2", staff: "10", vip: "20"};
             }
           },
 
@@ -103,7 +103,7 @@
       }
 
       _generateCode() {
-        if ((this.attendee.name && this.attendee.lastname && this.attendee.type) || this.attendee.type == "guest") {
+        if ((this.attendee.name && this.attendee.lastname && this.attendee.type) || (this.attendee.type == "guest" || this.attendee.type == "vip")) {
           this.attendeeCollection.store({
             name: this.attendee.name,
             lastname: this.attendee.lastname,

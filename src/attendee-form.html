@@ -66,7 +66,7 @@
     }
     _attendeeTypeChanged(attendeeType) {
       let type = attendeeType || 'allinclusive';
-      if (type == "allinclusive") {
+      if (type == "allinclusive" || type == "vip" || type == "staff") {
           this.set('attendee.meal', true);
           this.set('attendee.goodies', true);
       } else if (type == "guestmeal") {
