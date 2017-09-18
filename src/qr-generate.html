@@ -43,6 +43,7 @@
     <attendee-card attendee="[[attendeeObject]]"></attendee-card>
     <canvas id="qr" hidden></canvas>
     <attendee-form title="Register a new attendee" attendee="{{attendee}}" type-enable on-validate-form="_generateCode"></attendee-form>
+    <paper-button raised on-tap="_generateCodeFromBatch">Generate</paper-button>
     <paper-toast id="toast" duration="5000">
       <span class="toast-message">[[toastMessage]]</span><iron-icon icon$="[[toastIcon]]"></iron-icon>
     </paper-toast>
@@ -102,7 +103,17 @@
         this.$.toast.fitInto = this;
       }
 
-      _generateCode() {
+      _generateCodeFromBatch() {
+        const attendees = [];
+        attendees.forEach((attendee) => {
+          this._generateCode(attendee);
+        });
+      }
+
+      _generateCode(attendee) {
+        if (attendee) {
+          this.set('attendee', attendee);
+        }
         if ((this.attendee.name && this.attendee.lastname && this.attendee.type) || (this.attendee.type == "guest" || this.attendee.type == "vip")) {
           this.attendeeCollection.store({
             name: this.attendee.name,
