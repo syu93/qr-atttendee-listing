@@ -2,3 +2,4 @@ bower_components/
 build/
 node_modules/
 src/config/horizon.js
+passport/config.php
